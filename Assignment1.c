@@ -1,101 +1,134 @@
-// problem 1 -- -- -- Calculator 
-//
-//
+/*
+ * Question 1: Basic Arithmetic Calculator
+ * Description: This program evaluates a simple arithmetic expression
+ * using a stack.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
-#define MAX 100
+#define MAX_SIZE 100
 
 typedef struct {
-    int data[MAX];
+    int data[MAX_SIZE];
     int top;
 } Stack;
 
-void init(Stack *s) {
+void init_stack(Stack *s) {
     s->top = -1;
 }
 
-int empty(Stack *s) {
+int is_stack_empty(Stack *s) {
     return s->top == -1;
 }
 
-int full(Stack *s) {
-    return s->top == MAX - 1;
+int is_stack_full(Stack *s) {
+    return s->top == MAX_SIZE - 1;
 }
 
-void push(Stack *s, int x) {
-    if (full(s)) {
-        printf("Stack Overflow! Cannot push %d\n", x);
+void push(Stack *s, int value) {
+    if (is_stack_full(s)) {
+        printf("Stack Overflow! Cannot push %d\n", value);
         return;
     }
-    s->data[++s->top] = x;
+    s->data[++s->top] = value;
 }
 
 int pop(Stack *s) {
-    if (empty(s)) {
+    if (is_stack_empty(s)) {
         printf("Stack Underflow! Cannot pop\n");
         return 0;
     }
     return s->data[s->top--];
 }
 
-int peek(Stack *s) {
-    if (empty(s)) {
-        printf("Stack Empty! No element to peek\n");
-        return 0;
-    }
-    return s->data[s->top];
-}
+int evaluate_expression(const char *expression, int *error_code) {
+    Stack operand_stack;
+    init_stack(&operand_stack);
 
-int eval(const char *expr, int *error) {
-    Stack s; init(&s);
-    char lastOp = '+';
-    int i = 0, n = strlen(expr), curr = 0, hasNum = 0;
-    while (i <= n) {
-        char ch = expr[i];
-        if (isdigit(ch)) {
-            curr = curr * 10 + (ch - '0');
-            hasNum = 1;
+    char last_operator = '+';
+    int i = 0;
+    int expression_length = strlen(expression);
+    int current_number = 0;
+    int is_number_being_parsed = 0;
+
+    while (i <= expression_length) {
+        char current_char = expression[i];
+
+        if (isdigit(current_char)) {
+            current_number = current_number * 10 + (current_char - '0');
+            is_number_being_parsed = 1;
         }
-        if ((!isdigit(ch) && ch != ' ') || i == n) {
-            if (hasNum == 0 && ch != ' ' && i != n) { *error = 1; return 0; }
-            if (lastOp == '+') push(&s, curr);
-            else if (lastOp == '-') push(&s, -curr);
-            else if (lastOp == '*') { int t = pop(&s); push(&s, t * curr); }
-            else if (lastOp == '/') {
-                if (curr == 0) { *error = 2; return 0; }
-                int t = pop(&s); push(&s, t / curr);
+
+        if ((!isdigit(current_char) && current_char != ' ') || i == expression_length) {
+            if (is_number_being_parsed == 0 && current_char != ' ' && i != expression_length) {
+                *error_code = 1; // Invalid expression
+                return 0;
             }
-            if (ch == '+' || ch == '-' || ch == '*' || ch == '/')
-                lastOp = ch;
-            else if (ch != ' ' && i != n) { *error = 1; return 0; }
-            curr = 0;
-            hasNum = 0;
+
+            if (last_operator == '+') {
+                push(&operand_stack, current_number);
+            } else if (last_operator == '-') {
+                push(&operand_stack, -current_number);
+            } else if (last_operator == '*') {
+                int top_operand = pop(&operand_stack);
+                push(&operand_stack, top_operand * current_number);
+            } else if (last_operator == '/') {
+                if (current_number == 0) {
+                    *error_code = 2; // Division by zero
+                    return 0;
+                }
+                int top_operand = pop(&operand_stack);
+                push(&operand_stack, top_operand / current_number);
+            }
+
+            if (current_char == '+' || current_char == '-' || current_char == '*' || current_char == '/') {
+                last_operator = current_char;
+            } else if (current_char != ' ' && i != expression_length) {
+                *error_code = 1; // Invalid character
+                return 0;
+            }
+
+            current_number = 0;
+            is_number_being_parsed = 0;
         }
-        ++i;
+        i++;
     }
-    int res = 0;
-    while (!empty(&s)) res += pop(&s);
-    return res;
+
+    int final_result = 0;
+    while (!is_stack_empty(&operand_stack)) {
+        final_result += pop(&operand_stack);
+    }
+    return final_result;
 }
 
 int main() {
-    char expr[256];
+    char input_expression[256];
     printf("Enter expression: ");
-    scanf("%[^\n]", expr);
-    int error = 0;
-    int ans = eval(expr, &error);
-    if (error == 1) printf("Error: Invalid expression.\n");
-    else if (error == 2) printf("Error: Division by zero.\n");
-    else printf("%d\n", ans);
+    scanf("%[^\n]", input_expression);
+    getchar();
+
+    int error_code = 0;
+    int result = evaluate_expression(input_expression, &error_code);
+
+    if (error_code == 1) {
+        printf("Error: Invalid expression.\n");
+    } else if (error_code == 2) {
+        printf("Error: Division by zero.\n");
+    } else {
+        printf("Result: %d\n", result);
+    }
     return 0;
 }
 
 
-
-
-// problem 2 --- CRUD ops in file
+/*
+ * Question 2: User CRUD Operations in a File
+ *
+ * Description: This program performs Create,Read,Update & Delete
+ * operations for user records stored in a text file.
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -109,204 +142,159 @@ typedef struct {
     int age;
 } User;
 
-void trimNewline(char *str) {
-    int len = strlen(str);
-    if (len > 0 && str[len - 1] == '\n')
-        str[len - 1] = '\0';
-}
-
-void createUser() {
-    User u;
-    FILE *f = fopen(FILENAME, "a");
-    if (!f) {
+void create_user() {
+    User new_user;
+    FILE *file = fopen(FILENAME, "a");
+    if (!file) {
         printf("Error opening file!\n");
         return;
     }
+
     printf("Enter ID: ");
-    scanf("%d", &u.id);
-    getchar();
+    scanf("%d", &new_user.id);
+    getchar(); // Consume the newline character
 
     printf("Enter Name: ");
-    scanf("%[^\n]", u.name);
+    scanf("%[^\n]", new_user.name);
     getchar();
 
     printf("Enter Age: ");
-    scanf("%d", &u.age);
+    scanf("%d", &new_user.age);
     getchar();
 
-    fprintf(f, "%d %s %d\n", u.id, u.name, u.age);
-    fclose(f);
+    fprintf(file, "%d %s %d\n", new_user.id, new_user.name, new_user.age);
+    fclose(file);
     printf("User added.\n");
 }
 
-void readUsers() {
-    User u;
-    FILE *f = fopen(FILENAME, "r");
-    if (!f) {
-        printf("No users found.\n");
+void read_users() {
+    User current_user;
+    FILE *file = fopen(FILENAME, "r");
+    if (!file) {
+        printf("No users found or file cannot be opened.\n");
         return;
     }
-    printf("ID\tName\tAge\n");
-    while (fscanf(f, "%d", &u.id) == 1) {
-        char line[100];
-        if (!fgets(line, sizeof(line), f)) break;
 
-        trimNewline(line);
-
-        char *lastSpace = strrchr(line, ' ');
-        if (lastSpace) {
-            u.age = atoi(lastSpace + 1);
-            *lastSpace = '\0';
-            strncpy(u.name, line, sizeof(u.name));
-            u.name[sizeof(u.name) - 1] = '\0';
-        } else {
-            strcpy(u.name, "");
-            u.age = 0;
-        }
-
-        printf("%d\t%s\t%d\n", u.id, u.name, u.age);
-    }
-    fclose(f);
-}
-
-int userExists(int id, User *user) {
-    FILE *f = fopen(FILENAME, "r");
-    if (!f) return 0;
-
-    User u;
-    while (fscanf(f, "%d", &u.id) == 1) {
-        char line[100];
-        if (!fgets(line, sizeof(line), f)) break;
-
-        trimNewline(line);
-
-        char *lastSpace = strrchr(line, ' ');
-        if (lastSpace) {
-            u.age = atoi(lastSpace + 1);
-            *lastSpace = '\0';
-            strncpy(u.name, line, sizeof(u.name));
-            u.name[sizeof(u.name) - 1] = '\0';
-        } else {
-            strcpy(u.name, "");
-            u.age = 0;
-        }
-
-        if (u.id == id) {
-            if (user) *user = u;
-            fclose(f);
-            return 1;
+    printf("\n--- User List ---\n");
+    printf("ID\tName\t\tAge\n");
+    printf("---------------------------\n");
+    char line_buffer[100];
+    
+    while (fgets(line_buffer, sizeof(line_buffer), file) != NULL) {
+        if (sscanf(line_buffer, "%d %[a-zA-Z ] %d", &current_user.id, current_user.name, &current_user.age) == 3) {
+            printf("%d\t%-15s\t%d\n", current_user.id, current_user.name, current_user.age);
         }
     }
-    fclose(f);
-    return 0;
+    fclose(file);
 }
 
-void updateUser() {
-    int id;
+int find_user_by_id(int id, User *found_user) {
+    FILE *file = fopen(FILENAME, "r");
+    if (!file) return 0;
+
+    User current_user;
+    char line_buffer[100];
+    int user_found = 0;
+
+    while (fgets(line_buffer, sizeof(line_buffer), file) != NULL) {
+        if (sscanf(line_buffer, "%d", &current_user.id) == 1) {
+            if (current_user.id == id) {
+                 if (sscanf(line_buffer, "%d %[a-zA-Z ] %d", &current_user.id, current_user.name, &current_user.age) == 3) {
+                    if (found_user) {
+                        *found_user = current_user;
+                    }
+                    user_found = 1;
+                    break;
+                 }
+            }
+        }
+    }
+
+    fclose(file);
+    return user_found;
+}
+
+void update_user() {
+    int id_to_update;
     printf("Enter ID to update: ");
-    scanf("%d", &id);
+    scanf("%d", &id_to_update);
     getchar();
 
-    User u;
-    if (!userExists(id, &u)) {
-        printf("User with ID %d not found.\n", id);
+    User user_to_update;
+    if (!find_user_by_id(id_to_update, &user_to_update)) {
+        printf("User with ID %d not found.\n", id_to_update);
         return;
     }
 
-    printf("Enter new name: ");
-    scanf("%[^\n]", u.name);
+    printf("Enter new name (current: %s): ", user_to_update.name);
+    scanf("%[^\n]", user_to_update.name);
     getchar();
 
-    printf("Enter new age: ");
-    scanf("%d", &u.age);
+    printf("Enter new age (current: %d): ", user_to_update.age);
+    scanf("%d", &user_to_update.age);
     getchar();
 
-    FILE *f = fopen(FILENAME, "r");
-    FILE *temp = fopen("temp.txt", "w");
-    if (!f || !temp) {
+    FILE *original_file = fopen(FILENAME, "r");
+    FILE *temp_file = fopen("temp.txt", "w");
+    if (!original_file || !temp_file) {
         printf("File error.\n");
-        if (f) fclose(f);
-        if (temp) fclose(temp);
+        if (original_file) fclose(original_file);
+        if (temp_file) fclose(temp_file);
         return;
     }
 
-    User tempUser;
-    while (fscanf(f, "%d", &tempUser.id) == 1) {
-        char line[100];
-        if (!fgets(line, sizeof(line), f)) break;
-
-        trimNewline(line);
-
-        char *lastSpace = strrchr(line, ' ');
-        if (lastSpace) {
-            tempUser.age = atoi(lastSpace + 1);
-            *lastSpace = '\0';
-            strncpy(tempUser.name, line, sizeof(tempUser.name));
-            tempUser.name[sizeof(tempUser.name) - 1] = '\0';
-        } else {
-            strcpy(tempUser.name, "");
-            tempUser.age = 0;
-        }
-
-        if (tempUser.id == id)
-            fprintf(temp, "%d %s %d\n", u.id, u.name, u.age);
-        else
-            fprintf(temp, "%d %s %d\n", tempUser.id, tempUser.name, tempUser.age);
+    User user_from_file;
+    char line_buffer[100];
+    while (fgets(line_buffer, sizeof(line_buffer), original_file) != NULL) {
+         if (sscanf(line_buffer, "%d", &user_from_file.id) == 1) {
+            if (user_from_file.id == id_to_update) {
+                fprintf(temp_file, "%d %s %d\n", user_to_update.id, user_to_update.name, user_to_update.age);
+            } else {
+                fputs(line_buffer, temp_file);
+            }
+         }
     }
 
-    fclose(f);
-    fclose(temp);
+    fclose(original_file);
+    fclose(temp_file);
 
     remove(FILENAME);
     rename("temp.txt", FILENAME);
     printf("User updated.\n");
 }
 
-void deleteUser() {
-    int id;
+void delete_user() {
+    int id_to_delete;
     printf("Enter ID to delete: ");
-    scanf("%d", &id);
+    scanf("%d", &id_to_delete);
     getchar();
 
-    User dummy;
-    if (!userExists(id, NULL)) {
-        printf("User with ID %d not found.\n", id);
+    if (!find_user_by_id(id_to_delete, NULL)) {
+        printf("User with ID %d not found.\n", id_to_delete);
         return;
     }
 
-    FILE *f = fopen(FILENAME, "r");
-    FILE *temp = fopen("temp.txt", "w");
-    if (!f || !temp) {
+    FILE *original_file = fopen(FILENAME, "r");
+    FILE *temp_file = fopen("temp.txt", "w");
+    if (!original_file || !temp_file) {
         printf("File error.\n");
-        if (f) fclose(f);
-        if (temp) fclose(temp);
+        if (original_file) fclose(original_file);
+        if (temp_file) fclose(temp_file);
         return;
     }
 
-    User u;
-    while (fscanf(f, "%d", &u.id) == 1) {
-        char line[100];
-        if (!fgets(line, sizeof(line), f)) break;
-
-        trimNewline(line);
-
-        char *lastSpace = strrchr(line, ' ');
-        if (lastSpace) {
-            u.age = atoi(lastSpace + 1);
-            *lastSpace = '\0';
-            strncpy(u.name, line, sizeof(u.name));
-            u.name[sizeof(u.name) - 1] = '\0';
-        } else {
-            strcpy(u.name, "");
-            u.age = 0;
+    User user_from_file;
+    char line_buffer[100];
+    while (fgets(line_buffer, sizeof(line_buffer), original_file) != NULL) {
+        if (sscanf(line_buffer, "%d", &user_from_file.id) == 1) {
+            if (user_from_file.id != id_to_delete) {
+                fputs(line_buffer, temp_file);
+            }
         }
-
-        if (u.id != id)
-            fprintf(temp, "%d %s %d\n", u.id, u.name, u.age);
     }
 
-    fclose(f);
-    fclose(temp);
+    fclose(original_file);
+    fclose(temp_file);
 
     remove(FILENAME);
     rename("temp.txt", FILENAME);
@@ -314,7 +302,7 @@ void deleteUser() {
 }
 
 int main() {
-    int choice;
+    int menu_choice;
     while (1) {
         printf("\nUser CRUD Menu:\n");
         printf("1. Add User\n");
@@ -323,14 +311,14 @@ int main() {
         printf("4. Delete User\n");
         printf("5. Exit\n");
         printf("Enter choice: ");
-        scanf("%d", &choice);
+        scanf("%d", &menu_choice);
         getchar();
 
-        switch (choice) {
-            case 1: createUser(); break;
-            case 2: readUsers(); break;
-            case 3: updateUser(); break;
-            case 4: deleteUser(); break;
+        switch (menu_choice) {
+            case 1: create_user(); break;
+            case 2: read_users(); break;
+            case 3: update_user(); break;
+            case 4: delete_user(); break;
             case 5: return 0;
             default: printf("Invalid choice.\n");
         }
