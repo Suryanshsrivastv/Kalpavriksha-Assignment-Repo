@@ -61,18 +61,33 @@ void printNumberRecursion(int index ,int numberStudents, struct studentRecord st
     printNumberRecursion(index+1,numberStudents,studentsArray);
 }
 
+int areMarksValid(int marks[]) {
+    for (int i = 0; i < 3; i++) {
+        if (marks[i] < 0 || marks[i] > 100) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int main()
 {   
-    printf("Enter the number of Students ");
+    printf("Enter the number of students in range (1-100): ");
     int numberStudents = 0;
     scanf("%d",&numberStudents);
+
+    if (numberStudents < 1 || numberStudents > 100) {
+    fprintf(stderr, "Error: Number of students must be between 1 and 100.\n");
+    return 1;
+    }
+
     getchar();
     
     struct studentRecord studentsArray[numberStudents];
     char lineBufferForInput[100];
     
     for(int i=0;i<numberStudents;i++){
-        printf("Enter the student details separated by space ");
+        printf("Enter details for student %d (Roll Name Marks1 Marks2 Marks3): ", i + 1);
         fgets(lineBufferForInput , sizeof(lineBufferForInput) , stdin);
         
         sscanf(lineBufferForInput , "%d %s %d %d %d",
@@ -80,7 +95,14 @@ int main()
                 studentsArray[i].studentName,
                 &studentsArray[i].studentMarks[0],
                 &studentsArray[i].studentMarks[1],
-                &studentsArray[i].studentMarks[2]);
+                &studentsArray[i].studentMarks[2]
+            );
+
+        if (!areMarksValid(studentsArray[i].studentMarks)) {
+            fprintf(stderr, "Error: Marks for student %s (Roll %d) must be between 0 and 100.\n",
+                studentsArray[i].studentName, studentsArray[i].studentRollNumber);
+                return 1;
+        }
     }
     
     for(int i=0;i<numberStudents;i++){
@@ -94,7 +116,7 @@ int main()
         printf("\n");
     }
     
-    printf("\n Recursion for Roll Number of students (via Recursion) :");
+    printf("\n Recursion for Roll Number of students :");
     printNumberRecursion(0, numberStudents , studentsArray);
     
 
