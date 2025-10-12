@@ -87,7 +87,7 @@ int main()
     char lineBufferForInput[100];
     
     for(int i=0;i<numberStudents;i++){
-        printf("Enter details for student %d (Roll Name Marks1 Marks2 Marks3): ", i + 1);
+        printf("Enter details for student %d (Roll Name Marks1(0-100) Marks2(0-100) Marks3(0-100)): ", i + 1);
         fgets(lineBufferForInput , sizeof(lineBufferForInput) , stdin);
         
         sscanf(lineBufferForInput , "%d %s %d %d %d",
