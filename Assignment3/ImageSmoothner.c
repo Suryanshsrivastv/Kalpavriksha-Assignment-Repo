@@ -2,6 +2,56 @@
 #include<stdlib.h>
 #include<time.h>
 
+void smoothImageMatrix(int matrixSide, int** imageMatrix) {
+    int* previousRowBuffer = (int*)malloc(matrixSide * sizeof(int));
+    int* currentRowBuffer = (int*)malloc(matrixSide * sizeof(int));
+
+    if (previousRowBuffer == NULL || currentRowBuffer == NULL) {
+        fprintf(stderr, "Buffer memory allocation failed.\n");
+        return;
+    }
+
+    for (int rowIndex = 0; rowIndex < matrixSide; rowIndex++) {
+        for (int bufferIndex = 0; bufferIndex < matrixSide; bufferIndex++) {
+            *(currentRowBuffer + bufferIndex) = *(*(imageMatrix + rowIndex) + bufferIndex);
+        }
+
+        for (int columnIndex = 0; columnIndex < matrixSide; columnIndex++) {
+            int neighborSum = 0;
+            int neighborCount = 0;
+
+            for (int deltaRow = -1; deltaRow <= 1; deltaRow++) {
+                for (int deltaColumn = -1; deltaColumn <= 1; deltaColumn++) {
+                    int neighborRow = rowIndex + deltaRow;
+                    int neighborColumn = columnIndex + deltaColumn;
+
+                    if (neighborRow >= 0 && neighborRow < matrixSide &&
+                        neighborColumn >= 0 && neighborColumn < matrixSide) {
+                        
+                        neighborCount++;
+
+                        if (deltaRow == -1) {
+                            neighborSum += *(previousRowBuffer + neighborColumn);
+                        } else if (deltaRow == 0) {
+                            neighborSum += *(currentRowBuffer + neighborColumn);
+                        } else { 
+                            neighborSum += *(*(imageMatrix + neighborRow) + neighborColumn);
+                        }
+                    }
+                }
+            }
+            if (neighborCount > 0) {
+                *(*(imageMatrix + rowIndex) + columnIndex) = neighborSum / neighborCount;
+            }
+        }
+        for (int bufferIndex = 0; bufferIndex < matrixSide; bufferIndex++) {
+            *(previousRowBuffer + bufferIndex) = *(currentRowBuffer + bufferIndex);
+        }
+    }
+    free(previousRowBuffer);
+    free(currentRowBuffer);
+}
+
 void printMatrix(int** imageMatrix, int matrixSide) {
     printf("\n");
     for (int i = 0; i < matrixSide; i++) {
@@ -13,31 +63,31 @@ void printMatrix(int** imageMatrix, int matrixSide) {
 }
 
 void reverseRow(int rowSize, int* imageRow) {
-    int* front = imageRow;
-    int* back = imageRow + rowSize - 1;
-    while (front < back) {
-        int temp = *front;
-        *front = *back;
-        *back = temp;
-        front++;
-        back--;
+    int* frontPointer = imageRow;
+    int* backPointer = imageRow + rowSize - 1;
+    while (frontPointer < backPointer) {
+        int temp = *frontPointer;
+        *frontPointer = *backPointer;
+        *backPointer = temp;
+        frontPointer++;
+        backPointer--;
     }
 }
 void transposeMatrix(int sideLength, int** imageMatrix) {
     for (int i = 0; i < sideLength; i++) {
         for (int j = i + 1; j < sideLength; j++) {
             // Swaping values
-            int temp = *(*(imageMatrix + i) + j);
+            int tempVariable = *(*(imageMatrix + i) + j);
             *(*(imageMatrix + i) + j) = *(*(imageMatrix + j) + i);
-            *(*(imageMatrix + j) + i) = temp;
+            *(*(imageMatrix + j) + i) = tempVariable;
         }
     }
 }
 
-void rotateImageMatrix(int sideLength, int** matrix) {
-    transposeMatrix(sideLength, matrix);
+void rotateImageMatrix(int sideLength, int** imageMatrix) {
+    transposeMatrix(sideLength, imageMatrix);
     for (int i = 0; i < sideLength; i++) {
-        reverseRow(sideLength, *(matrix + i));
+        reverseRow(sideLength, *(imageMatrix + i));
     }
 }
 
@@ -61,6 +111,7 @@ int main(){
             return 1;
         }
     }
+    
     srand(time(NULL));
 
     for (int i = 0; i < matrixSide; i++) {
@@ -76,7 +127,11 @@ int main(){
     printf("\nMatrix after 90 Clockwise Rotation:");
     printMatrix(matrix, matrixSide);
     
-    
+    smoothImageMatrix(matrixSide, matrix);
+    printf("\nMatrix after Applying 3x3 Smoothing Filter:");
+    printMatrix(matrix, matrixSide);
+
+
     for (int i = 0; i < matrixSide; i++) {
         free(*(matrix + i));
     }
