@@ -2,6 +2,12 @@
 #include<stdlib.h>
 #include<time.h>
 
+void swapValues(int* pointerA, int* pointerB) {
+    int tempValue = *pointerA;
+    *pointerA = *pointerB;
+    *pointerB = tempValue;
+}
+
 void smoothImageMatrix(int matrixSide, int** imageMatrix) {
     int* previousRowBuffer = (int*)malloc(matrixSide * sizeof(int));
     int* currentRowBuffer = (int*)malloc(matrixSide * sizeof(int));
@@ -66,20 +72,16 @@ void reverseRow(int rowSize, int* imageRow) {
     int* frontPointer = imageRow;
     int* backPointer = imageRow + rowSize - 1;
     while (frontPointer < backPointer) {
-        int temp = *frontPointer;
-        *frontPointer = *backPointer;
-        *backPointer = temp;
+        swapValues(frontPointer, backPointer);
         frontPointer++;
         backPointer--;
     }
 }
+
 void transposeMatrix(int sideLength, int** imageMatrix) {
     for (int i = 0; i < sideLength; i++) {
         for (int j = i + 1; j < sideLength; j++) {
-            // Swaping values
-            int tempVariable = *(*(imageMatrix + i) + j);
-            *(*(imageMatrix + i) + j) = *(*(imageMatrix + j) + i);
-            *(*(imageMatrix + j) + i) = tempVariable;
+            swapValues((*(imageMatrix + i) + j), (*(imageMatrix + j) + i));
         }
     }
 }
@@ -94,8 +96,17 @@ void rotateImageMatrix(int sideLength, int** imageMatrix) {
 int main(){
     printf("Enter the dimension(Side) of the Matrix in range(1-9): ");
     int matrixSide = 0;
-    if (scanf("%d", &matrixSide) != 1 || matrixSide < 1 || matrixSide > 10) {
-        fprintf(stderr, "Invalid input.\n");
+    char inputBuffer[100];
+
+    if (fgets(inputBuffer, sizeof(inputBuffer), stdin) == NULL) {
+        fprintf(stderr, "Failed to read input.\n");
+        return 1;
+    }
+
+    int scanResult = sscanf(inputBuffer, "%d", &matrixSide);
+
+    if (scanResult != 1 || matrixSide < 1 || matrixSide > 10) {
+        fprintf(stderr, "Invalid input. Please enter a single number between 2 and 10.\n");
         return 1;
     }
 
