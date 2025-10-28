@@ -23,7 +23,16 @@ void printMenu()
     printf("8. Exit\n");
 }
 
-Product getProductDetails()
+int doesIdExist(Product* productsArray, int productArraySize, int idToCheck) {
+    for (int i = 0; i < productArraySize; i++) {
+        if (productsArray[i].productID == idToCheck) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+Product getProductDetails(Product* productsArray, int productArraySize)
 {
     Product tempProduct;
     char scannerBuffer[100];
@@ -36,6 +45,10 @@ Product getProductDetails()
         scannedItems = sscanf(scannerBuffer, "%d %c", &tempProduct.productID, &bufferChar);
 
         if ((scannedItems == 1 || (scannedItems == 2 && bufferChar == '\n')) && tempProduct.productID >= 1 && tempProduct.productID <= 10000) {
+            if (doesIdExist(productsArray, productArraySize, tempProduct.productID)) {
+                printf("Product with this ID already exists, Please use a unique ID.\n");
+                continue;
+            }
             break;
         } else {
             printf("Please enter only a number between 1 and 10000.\n");
@@ -208,7 +221,7 @@ int deleteProduct(Product** productsArray, int* productsArraysize) {
 
 void addNewProduct(Product** productsArray, int* productsArraysize){
     printf("\n--- Add New Product ---\n");
-    Product tempProduct = getProductDetails();
+    Product tempProduct = getProductDetails(*productsArray, *productsArraysize);
     Product* tempArray = realloc(*productsArray, (*productsArraysize + 1) * sizeof(Product));
 
     if (tempArray == NULL) {
@@ -316,7 +329,7 @@ int main()
     for (int productIndex = 0; productIndex < initialProductCount; productIndex++)
     {
         printf("\nEnter details for product %d:\n", productIndex + 1);
-        productArray[productIndex] = getProductDetails();
+        productArray[productIndex] = getProductDetails(productArray, productIndex);
     }
     
     while (1)
