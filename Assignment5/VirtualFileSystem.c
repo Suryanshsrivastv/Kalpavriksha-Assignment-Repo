@@ -88,8 +88,8 @@ void freeBlock(int blockIndex) {
 }
 
 void initVfs() {
-    for (int i = 0; i < NUM_BLOCKS; i++) {
-        addFreeBlock(i);
+    for (int blockIndex = 0; blockIndex < NUM_BLOCKS; blockIndex++) {
+        addFreeBlock(blockIndex);
     }
     globalUsedBlocks = 0;
     root = (FileNode*)malloc(sizeof(FileNode));
@@ -361,8 +361,8 @@ void vfsWrite(const char* name, const char* data) {
         return;
     }
     
-    for (int i = 0; i < file->blocksUsed; i++) {
-        freeBlock(file->blockPointers[i]);
+    for (int index = 0; index < file->blocksUsed; index++) {
+        freeBlock(file->blockPointers[index]);
     }
     file->blocksUsed = 0;
     file->contentSize = 0;
@@ -388,20 +388,20 @@ void vfsWrite(const char* name, const char* data) {
         return;
     }
 
-    for (int i = 0; i < blocksNeeded; i++) {
+    for (int index = 0; index < blocksNeeded; index++) {
         int blockIndex = allocateBlock();
         if (blockIndex == -1) {
             printf("Disk full during write.\n");
-            for (int j = 0; j < i; j++) {
-                freeBlock(file->blockPointers[j]);
+            for (int cleanupIndex = 0; cleanupIndex < index; cleanupIndex++) {
+                freeBlock(file->blockPointers[cleanupIndex]);
             }
             file->blocksUsed = 0;
             return;
         }
 
-        file->blockPointers[i] = blockIndex;
+        file->blockPointers[index] = blockIndex;
         
-        int offset = i * BLOCK_SIZE;
+        int offset = index * BLOCK_SIZE;
         int bytesToWrite = (dataLen - offset > BLOCK_SIZE) ? BLOCK_SIZE : (dataLen - offset);
         
         memcpy(virtualDisk[blockIndex], data + offset, bytesToWrite);
@@ -424,8 +424,8 @@ void vfsRead(const char* name) {
     }
 
     long bytesRead = 0;
-    for (int i = 0; i < file->blocksUsed; i++) {
-        int blockIndex = file->blockPointers[i];
+    for (int index = 0; index < file->blocksUsed; index++) {
+        int blockIndex = file->blockPointers[index];
         
         int bytesToRead = (file->contentSize - bytesRead > BLOCK_SIZE) ? 
                           BLOCK_SIZE : (file->contentSize - bytesRead);
@@ -446,8 +446,8 @@ void vfsDelete(const char* name) {
         printf("File not found.\n");
         return;
     }
-    for (int i = 0; i < file->blocksUsed; i++) {
-        freeBlock(file->blockPointers[i]);
+    for (int index = 0; index < file->blocksUsed; index++) {
+        freeBlock(file->blockPointers[index]);
     }
     if (removeChild(cwd, name)) {
         printf("File deleted successfully.\n");
