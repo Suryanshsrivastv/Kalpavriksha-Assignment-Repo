@@ -269,10 +269,16 @@ void vfsLs() {
 }
 
 void vfsMkdir(const char* name) {
+
+    if (strlen(name) > MAX_NAME_LEN) {
+        printf(" Name is too long (max %d chars).\n", MAX_NAME_LEN);
+        return;
+    }
     if (findChild(cwd, name)) {
         printf("Name already exists in current directory.\n");
         return;
     }
+
     FileNode* newDir = (FileNode*)malloc(sizeof(FileNode));
     strcpy(newDir->name, name);
     newDir->isDirectory = 1;
@@ -285,6 +291,11 @@ void vfsMkdir(const char* name) {
 }
 
 void vfsCreate(const char* name) {
+
+    if (strlen(name) > MAX_NAME_LEN) {
+        printf("Name is too long (max %d chars).\n", MAX_NAME_LEN);
+        return;
+    }
     if (findChild(cwd, name)) {
         printf("Name already exists in current directory.\n");
         return;
