@@ -33,6 +33,8 @@
 
     } NTeam;
 
+    void addPlayerToTeam(NPlayer *player,int teamIndex,NTeam team[10]);
+    
     int addPlayerToATeam(NTeam teams[10],int idValid[]){
         char buffer[128];
         char nameBuf[128];
@@ -127,12 +129,12 @@
         
         newPlayer->id = playerId;
         newPlayer->name = strdup(nameBuf);
-        newPlayer->team = teams[teamId].teamName;
+        newPlayer->team = strdup(teams[teamId].teamName);
         
         switch(roleSel){
-            case 1: newPlayer->role = "Batsman"; break;
-            case 2: newPlayer->role = "Bowler"; break;
-            case 3: newPlayer->role = "All-rounder"; break;
+            case 1: newPlayer->role = strdup("Batsman"); break;
+            case 2: newPlayer->role = strdup("Bowler"); break;
+            case 3: newPlayer->role = strdup("All-rounder"); break;
         }
         
         newPlayer->totalRuns = totalRuns;
@@ -188,8 +190,8 @@
         NPlayer *newPlayer = malloc(sizeof(NPlayer));
         newPlayer->id = player.id;
         newPlayer->name = strdup(player.name);
-        newPlayer->team = player.team;
-        newPlayer->role = player.role;
+        newPlayer->team = strdup(player.team);
+        newPlayer->role = strdup(player.role);
         newPlayer->totalRuns = player.totalRuns;
         newPlayer->battingAverage = player.battingAverage;
         newPlayer->strikeRate = player.strikeRate;
@@ -442,6 +444,8 @@
         while (current != NULL) {
             nextNode = current->nextPlayer;
             free(current->name);
+            free(current->team);
+            free(current->role);
             free(current);
             current = nextNode;
         }
